@@ -15,7 +15,7 @@ message(paste("Initial available disk space:", initial_space, "GB"))
 cran_packages <- c("gprofiler2", "fgsea", "WebGestaltR", "ggupset", 
                    "ggridges", "msigdbr", "grid", "venn", "ontologyIndex", "tidyverse")
 
-bioc_packages <- c("STRINGdb", "ReactomePA", "topGO", "ALL", "GO.db", "DESeq2")
+bioc_packages <- c("STRINGdb", "ReactomePA", "topGO", "GO.db", "ALL", "DESeq2", "org.Hs.eg.db")
 
 # Install CRAN packages only if they are missing
 for (pkg in cran_packages) {
@@ -41,6 +41,22 @@ for (pkg in bioc_packages) {
   }
 }
 
+# Check and install devtools if necessary
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  message("Installing CRAN package: devtools")
+  install.packages("devtools")
+} else {
+  message("CRAN package already installed: devtools")
+}
+
+# Install enrichR from GitHub
+if (!requireNamespace("enrichR", quietly = TRUE)) {
+  message("Installing enrichR from GitHub")
+  devtools::install_github("wjawaid/enrichR")
+} else {
+  message("Package enrichR already installed")
+}
+
 # Load all packages, perform minimal tests, and print versions
 test_installation <- function(pkg) {
   if (!require(pkg, character.only = TRUE)) {
@@ -51,7 +67,7 @@ test_installation <- function(pkg) {
   # Minimal functionality test for each package
   switch(pkg,
          "gprofiler2" = {try(gprofiler2::gconvert(c("TP53")), silent = TRUE)},
-         "fgsea" = {try(fgsea::fgsea(pathways = list(path1 = c("gene1", "gene2")), stats = c(gene1 = 1, gene2 = 2), minSize = 1, maxSize = 2), silent = TRUE)},
+         "fgsea" = {try(fgsea::fgsea(pathways = list(path1 = c("gene1", "gene2")), stats = c(gene1 = 1, gene2 = 2), minSize = 1, maxSize = 2, scoreType = "pos"), silent = TRUE)},
          "WebGestaltR" = {try(WebGestaltR::WebGestaltR(enrichMethod = "ORA", organism = "hsapiens"), silent = TRUE)},
          "STRINGdb" = {try(STRINGdb::STRINGdb$new(version = "11.0", species = 9606, score_threshold = 200), silent = TRUE)},
          "ReactomePA" = {try(ReactomePA::enrichPathway(gene = c("675", "7157")), silent = TRUE)},
@@ -60,12 +76,23 @@ test_installation <- function(pkg) {
          "ggridges" = {try(ggridges::geom_density_ridges(aes(y = 1, x = c(1:10))), silent = TRUE)},
          "msigdbr" = {try(msigdbr::msigdbr(species = "Homo sapiens", category = "C2"), silent = TRUE)},
          "grid" = {try(grid::grid.newpage(), silent = TRUE)},
-         "ALL" = {try(data(ALL::ALL), silent = TRUE)},
          "GO.db" = {try(GO.db::GOID("GO:0008150"), silent = TRUE)},
-         "veninstalled.packages()[, "Package"]n" = {try(venn::venn(list(A = 1:5, B = 4:8)), silent = TRUE)},
+         "venn" = {try(venn::venn(list(A = 1:5, B = 4:8)), silent = TRUE)},
          "ontologyIndex" = {try(ontologyIndex::get_ancestors("GO:0008150"), silent = TRUE)},
          "tidyverse" = {try(tidyverse::tibble(x = 1:5), silent = TRUE)},
          "DESeq2" = {try(DESeq2::makeExampleDESeqDataSet(), silent = TRUE)},
+         "enrichR" = {try(enrichR::enrichr(c("TP53", "BRCA1"), "KEGG_2021_Human"), silent = TRUE)},
+         "ALL" = {
+           try({
+             library(ALL)
+             data("ALL")
+             if (exists("ALL")) {
+               message("ALL dataset loaded successfully")
+             } else {
+               message("Failed to load ALL dataset")
+             }
+           }, silent = TRUE)
+         },
          {message(paste("No test available for", pkg))}
   )
   
@@ -76,7 +103,7 @@ test_installation <- function(pkg) {
 }
 
 # Run tests and report results
-results <- sapply(c(cran_packages, bioc_packages), test_installation)
+results <- sapply(c(cran_packages, bioc_packages, "enrichR"), test_installation)
 
 # Summary of installation and test results
 if(all(results)) {
