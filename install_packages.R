@@ -1,6 +1,3 @@
-### THIS SCRIPT INSTALLS PACKAGES REQUIRED FOR 2024 FEA WORKSHOP ###
-### RUN IN R CONSOLE AS: source("install_packages.R")
-
 # Function to check disk space (in GB)
 check_disk_space <- function() {
   df <- as.numeric(system("df --output=avail / | tail -1", intern = TRUE)) / (1024^2)
@@ -15,7 +12,8 @@ message(paste("Initial available disk space:", initial_space, "GB"))
 cran_packages <- c("gprofiler2", "fgsea", "WebGestaltR", "ggupset", 
                    "ggridges", "msigdbr", "grid", "venn", "ontologyIndex", "tidyverse")
 
-bioc_packages <- c("STRINGdb", "ReactomePA", "topGO", "GO.db", "ALL", "DESeq2", "org.Hs.eg.db")
+bioc_packages <- c("STRINGdb", "ReactomePA", "topGO", "ALL", "GO.db", "DESeq2", 
+                   "org.Hs.eg.db", "clusterProfiler", "biomaRt")
 
 # Install CRAN packages only if they are missing
 for (pkg in cran_packages) {
@@ -76,12 +74,6 @@ test_installation <- function(pkg) {
          "ggridges" = {try(ggridges::geom_density_ridges(aes(y = 1, x = c(1:10))), silent = TRUE)},
          "msigdbr" = {try(msigdbr::msigdbr(species = "Homo sapiens", category = "C2"), silent = TRUE)},
          "grid" = {try(grid::grid.newpage(), silent = TRUE)},
-         "GO.db" = {try(GO.db::GOID("GO:0008150"), silent = TRUE)},
-         "venn" = {try(venn::venn(list(A = 1:5, B = 4:8)), silent = TRUE)},
-         "ontologyIndex" = {try(ontologyIndex::get_ancestors("GO:0008150"), silent = TRUE)},
-         "tidyverse" = {try(tidyverse::tibble(x = 1:5), silent = TRUE)},
-         "DESeq2" = {try(DESeq2::makeExampleDESeqDataSet(), silent = TRUE)},
-         "enrichR" = {try(enrichR::enrichr(c("TP53", "BRCA1"), "KEGG_2021_Human"), silent = TRUE)},
          "ALL" = {
            try({
              library(ALL)
@@ -93,6 +85,14 @@ test_installation <- function(pkg) {
              }
            }, silent = TRUE)
          },
+         "GO.db" = {try(GO.db::GOID("GO:0008150"), silent = TRUE)},
+         "venn" = {try(venn::venn(list(A = 1:5, B = 4:8)), silent = TRUE)},
+         "ontologyIndex" = {try(ontologyIndex::get_ancestors("GO:0008150"), silent = TRUE)},
+         "tidyverse" = {try(tidyverse::tibble(x = 1:5), silent = TRUE)},
+         "DESeq2" = {try(DESeq2::makeExampleDESeqDataSet(), silent = TRUE)},
+         "enrichR" = {try(enrichR::enrichr(c("TP53", "BRCA1"), "KEGG_2021_Human"), silent = TRUE)},
+         "clusterProfiler" = {try(clusterProfiler::enrichGO(gene = c("TP53", "BRCA1"), OrgDb = "org.Hs.eg.db", ont = "BP"), silent = TRUE)},
+         "biomaRt" = {try(biomaRt::useMart("ensembl"), silent = TRUE)},
          {message(paste("No test available for", pkg))}
   )
   
