@@ -8,12 +8,55 @@ check_disk_space <- function() {
 initial_space <- check_disk_space()
 message(paste("Initial available disk space:", initial_space, "GB"))
 
+# Function to check if rust is installed
+check_rust <- function() {
+  tryCatch({
+    # Check if rustc (Rust compiler) is available in the PATH
+    rust_installed <- system("which rustc", intern = TRUE, ignore.stderr = TRUE)
+    
+    # If rustc is not installed or the command fails
+    if (length(rust_installed) == 0 || rust_installed == "") {
+      message("Rust is not installed. Installing Rust...")
+      
+      # Install rust using rustup (works only on Linux)
+      if (Sys.info()[["sysname"]] == "Linux") {
+        install_command <- "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y"
+        message("Running the installation command: ", install_command)
+        
+        # Run the installation command
+        system(install_command, intern = TRUE)
+        
+        # After installation, update the PATH to include the cargo bin directory
+        Sys.setenv(PATH = paste(Sys.getenv("HOME"), "/.cargo/bin", Sys.getenv("PATH"), sep = ":"))
+        
+        # Check if Rust is now installed
+        rust_installed <- system("which rustc", intern = TRUE, ignore.stderr = FALSE)
+        if (length(rust_installed) > 0 && rust_installed != "") {
+          message("Rust installed successfully: ", rust_installed)
+        } else {
+          stop("Rust installation failed. Please install Rust manually.")
+        }
+      } else {
+        stop("Rust installation is only supported on Linux through this script. Please install Rust manually on other systems.")
+      }
+    } else {
+      message("Rust is already installed: ", rust_installed)
+    }
+  }, error = function(e) {
+    message("Error checking for rust: ", e$message)
+    stop("Please ensure Rust is installed and available in the PATH.")
+  })
+}
+
+# Call check_rust to install Rust if necessary
+check_rust()
+
 # Define package lists
 cran_packages <- c("gprofiler2", "fgsea", "WebGestaltR", "ggupset", 
                    "ggridges", "msigdbr", "grid", "venn", "ontologyIndex", "tidyverse")
 
 bioc_packages <- c("STRINGdb", "ReactomePA", "topGO", "ALL", "GO.db", "DESeq2", 
-                   "org.Hs.eg.db", "clusterProfiler", "biomaRt")
+                   "org.Hs.eg.db", "org.Mm.eg.db", "clusterProfiler", "biomaRt")
 
 # Install CRAN packages only if they are missing
 for (pkg in cran_packages) {
@@ -45,6 +88,17 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
   install.packages("devtools")
 } else {
   message("CRAN package already installed: devtools")
+}
+
+# Check for Rust installation
+check_rust()
+
+# Install WebGestaltR from GitHub
+if (!requireNamespace("WebGestaltR", quietly = TRUE)) {
+  message("Installing WebGestaltR from GitHub...")
+  devtools::install_github("bzhanglab/WebGestaltR")
+} else {
+  message("Package WebGestaltR already installed")
 }
 
 # Install enrichR from GitHub
